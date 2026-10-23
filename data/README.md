@@ -1,26 +1,31 @@
 # Dataset guide
 
-## Real dataset source
+## Real dataset source and local copy
 
 The project is configured to read `data/logistics_data.csv` by default. A suitable
 public source is the [DataCo Smart Supply Chain for Big Data Analysis dataset on
 Kaggle](https://www.kaggle.com/datasets/shashwatwork/dataco-smart-supply-chain-for-big-data-analysis).
+The Kaggle dataset API currently lists its license as **CC0: Public Domain**.
+The downloaded shipment CSV is approximately 95.9 MB. This copy includes
+customer names, addresses, and identifiers, so the project keeps it local and
+does not include it in the public Git repository despite the listing's CC0
+label.
 
-To obtain it:
+To obtain and prepare the source:
 
-1. Open the Kaggle dataset listing and sign in to Kaggle if required.
-2. Read the current dataset description and license/terms before downloading or
-   using the data. This repository does not redistribute the original dataset.
-3. Use the listing's **Download** option and extract the CSV locally.
-4. Rename the CSV to `logistics_data.csv` and place it in this `data` folder.
-   Alternatively, pass its path to `logistics_analysis.py --data`.
-5. The DataCo file may contain personal or sensitive information and may use a
-   different delimiter/encoding. Do not publish the original CSV. The analysis
-   does not export a cleaned copy by default.
+1. Obtain the dataset from its Kaggle listing and review the current license
+   and terms yourself.
+2. Use the listing's **Download** option and extract the archive locally.
+3. Place `DataCoSupplyChainDataset.csv` in this folder as `logistics_data.csv`.
+   The corresponding `DescriptionDataCoSupplyChain.csv` documents source
+   columns. `tokenized_access_logs.csv` is clickstream data, not the primary
+   shipment dataset.
+4. Alternatively, pass the actual CSV path to `logistics_analysis.py --data`.
+   Keep the raw file local; it is excluded by `.gitignore`.
 
-The pipeline detects common comma, semicolon, tab, and pipe delimiters. If
-autodetection fails, specify one explicitly, for example
-`--delimiter ";"`.
+The DataCo shipment CSV is comma-delimited. The pipeline also detects common
+semicolon, tab, and pipe delimiters. If autodetection fails, specify one
+explicitly, for example `--delimiter ";"`.
 
 ## Synthetic test data
 
@@ -31,6 +36,6 @@ observations** and must not be used to make operational decisions.
 
 ## Privacy
 
-The real dataset should remain local unless you have verified the license and
-privacy requirements for redistribution. `data/logistics_data.csv` and common
-archive formats are excluded by `.gitignore`.
+`data/logistics_data.csv` and all downloaded CSVs and common archive formats
+are excluded by `.gitignore`. Output samples suppress identifying columns, and
+the analysis does not export the cleaned input data.

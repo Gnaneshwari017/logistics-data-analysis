@@ -1,9 +1,9 @@
-Exploratory K-means clustering used 40 rows and 6 numeric feature(s): Shipping Cost, Days for Shipping (Real), Days for Shipment (Scheduled), Delivery Delay Days, Order Item Quantity, Order Item Total.
+Exploratory K-means clustering used 20000 deterministically sampled rows and 10 numeric feature(s): Days for shipping (real), Days for shipment (scheduled), Benefit per order, Order Item Discount, Order Item Discount Rate, Order Item Profit Ratio, Order Item Quantity, Sales, Order Item Total, Order Profit Per Order.
 Features were median-imputed and standardized. Cluster IDs are descriptive, not quality rankings.
 Cluster mean profiles:
-         Shipping Cost  Days for Shipping (Real)  Days for Shipment (Scheduled)  Delivery Delay Days  Order Item Quantity  Order Item Total
+         Days for shipping (real)  Days for shipment (scheduled)  Benefit per order  Order Item Discount  Order Item Discount Rate  Order Item Profit Ratio  Order Item Quantity  Sales  Order Item Total  Order Profit Per Order
 cluster
-0                20.87                      1.00                           1.00                 0.00                 1.50             74.33
-1                12.99                      2.63                           3.26                -0.63                 2.37            101.11
-2                11.11                      5.80                           3.73                 2.07                 2.40            110.27
+0                            3.48                           2.91              80.41                37.95                      0.11                     0.27                 2.39 342.48            304.52                   80.41
+1                            3.53                           2.95              23.11                11.96                      0.09                     0.19                 1.98 134.31            122.34                   23.11
+2                            3.57                           3.01            -261.09                25.64                      0.10                    -1.27                 2.32 249.50            223.86                 -261.09
 Validate whether these groupings are operationally meaningful before making decisions.

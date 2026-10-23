@@ -1,45 +1,131 @@
-Dataset shape: 40 rows x 10 columns
-Column names: record_origin, Order Date, Delivery Status, Shipping Mode, Shipping Cost, Days for Shipping (Real), Days for Shipment (Scheduled), Delivery Delay Days, Order Item Quantity, Order Item Total
+Dataset shape: 180519 rows x 53 columns
+Column names: Type, Days for shipping (real), Days for shipment (scheduled), Benefit per order, Sales per customer, Delivery Status, Late_delivery_risk, Category Id, Category Name, Customer City, Customer Country, Customer Email, Customer Fname, Customer Id, Customer Lname, Customer Password, Customer Segment, Customer State, Customer Street, Customer Zipcode, Department Id, Department Name, Latitude, Longitude, Market, Order City, Order Country, Order Customer Id, order date (DateOrders), Order Id, Order Item Cardprod Id, Order Item Discount, Order Item Discount Rate, Order Item Id, Order Item Product Price, Order Item Profit Ratio, Order Item Quantity, Sales, Order Item Total, Order Profit Per Order, Order Region, Order State, Order Status, Order Zipcode, Product Card Id, Product Category Id, Product Description, Product Image, Product Name, Product Price, Product Status, shipping date (DateOrders), Shipping Mode
 Data types:
-  - record_origin: str
-  - Order Date: str
+  - Type: str
+  - Days for shipping (real): int64
+  - Days for shipment (scheduled): int64
+  - Benefit per order: float64
+  - Sales per customer: float64
   - Delivery Status: str
-  - Shipping Mode: str
-  - Shipping Cost: float64
-  - Days for Shipping (Real): int64
-  - Days for Shipment (Scheduled): int64
-  - Delivery Delay Days: int64
+  - Late_delivery_risk: int64
+  - Category Id: int64
+  - Category Name: str
+  - Customer City: str
+  - Customer Country: str
+  - Customer Email: str
+  - Customer Fname: str
+  - Customer Id: int64
+  - Customer Lname: str
+  - Customer Password: str
+  - Customer Segment: str
+  - Customer State: str
+  - Customer Street: str
+  - Customer Zipcode: float64
+  - Department Id: int64
+  - Department Name: str
+  - Latitude: float64
+  - Longitude: float64
+  - Market: str
+  - Order City: str
+  - Order Country: str
+  - Order Customer Id: int64
+  - order date (DateOrders): str
+  - Order Id: int64
+  - Order Item Cardprod Id: int64
+  - Order Item Discount: float64
+  - Order Item Discount Rate: float64
+  - Order Item Id: int64
+  - Order Item Product Price: float64
+  - Order Item Profit Ratio: float64
   - Order Item Quantity: int64
+  - Sales: float64
   - Order Item Total: float64
-Sample records (up to 5):
- record_origin Order Date  Delivery Status  Shipping Mode  Shipping Cost  Days for Shipping (Real)  Days for Shipment (Scheduled)  Delivery Delay Days  Order Item Quantity  Order Item Total
-SYNTHETIC ONLY 2025-01-02 Shipping on time Standard Class            8.5                         3                              4                   -1                    2              75.0
-SYNTHETIC ONLY 2025-01-03    Late delivery Standard Class           11.2                         6                              4                    2                    1              49.0
-SYNTHETIC ONLY 2025-01-04 Advance shipping    First Class           16.0                         2                              3                   -1                    3             120.0
-SYNTHETIC ONLY 2025-01-05    Late delivery   Second Class           12.4                         5                              3                    2                    2              88.0
-SYNTHETIC ONLY 2025-01-06 Shipping on time       Same Day           20.0                         1                              1                    0                    1              39.0
+  - Order Profit Per Order: float64
+  - Order Region: str
+  - Order State: str
+  - Order Status: str
+  - Order Zipcode: float64
+  - Product Card Id: int64
+  - Product Category Id: int64
+  - Product Description: float64
+  - Product Image: str
+  - Product Name: str
+  - Product Price: float64
+  - Product Status: int64
+  - shipping date (DateOrders): str
+  - Shipping Mode: str
+Sample records (up to 5; identifying fields suppressed):
+order date (DateOrders)  Delivery Status  Shipping Mode  Days for shipping (real)  Days for shipment (scheduled)
+        1/31/2018 22:56 Advance shipping Standard Class                         3                              4
+        1/13/2018 12:27    Late delivery Standard Class                         5                              4
+        1/13/2018 12:06 Shipping on time Standard Class                         4                              4
+        1/13/2018 11:45 Advance shipping Standard Class                         3                              4
+        1/13/2018 11:24 Advance shipping Standard Class                         2                              4
 Missing values by column:
-  - record_origin: 0
-  - Order Date: 0
+  - Type: 0
+  - Days for shipping (real): 0
+  - Days for shipment (scheduled): 0
+  - Benefit per order: 0
+  - Sales per customer: 0
   - Delivery Status: 0
-  - Shipping Mode: 0
-  - Shipping Cost: 0
-  - Days for Shipping (Real): 0
-  - Days for Shipment (Scheduled): 0
-  - Delivery Delay Days: 0
+  - Late_delivery_risk: 0
+  - Category Id: 0
+  - Category Name: 0
+  - Customer City: 0
+  - Customer Country: 0
+  - Customer Email: 0
+  - Customer Fname: 0
+  - Customer Id: 0
+  - Customer Lname: 8
+  - Customer Password: 0
+  - Customer Segment: 0
+  - Customer State: 0
+  - Customer Street: 0
+  - Customer Zipcode: 3
+  - Department Id: 0
+  - Department Name: 0
+  - Latitude: 0
+  - Longitude: 0
+  - Market: 0
+  - Order City: 0
+  - Order Country: 0
+  - Order Customer Id: 0
+  - order date (DateOrders): 0
+  - Order Id: 0
+  - Order Item Cardprod Id: 0
+  - Order Item Discount: 0
+  - Order Item Discount Rate: 0
+  - Order Item Id: 0
+  - Order Item Product Price: 0
+  - Order Item Profit Ratio: 0
   - Order Item Quantity: 0
+  - Sales: 0
   - Order Item Total: 0
+  - Order Profit Per Order: 0
+  - Order Region: 0
+  - Order State: 0
+  - Order Status: 0
+  - Order Zipcode: 155679
+  - Product Card Id: 0
+  - Product Category Id: 0
+  - Product Description: 180519
+  - Product Image: 0
+  - Product Name: 0
+  - Product Price: 0
+  - Product Status: 0
+  - shipping date (DateOrders): 0
+  - Shipping Mode: 0
 Duplicate rows: 0
 Recognized logistics fields:
-  - shipment_date: Order Date
+  - shipment_date: order date (DateOrders)
   - delivery_status: Delivery Status
   - shipping_mode: Shipping Mode
-  - shipping_cost: Shipping Cost
-  - delivery_time_days: Days for Shipping (Real)
-  - scheduled_delivery_days: Days for Shipment (Scheduled)
-  - delivery_delay_days: Delivery Delay Days
+  - shipping_cost: not available
+  - delivery_time_days: Days for shipping (real)
+  - scheduled_delivery_days: Days for shipment (scheduled)
+  - delivery_delay_days: not available
 
 Cleaning notes:
-  - Parsed 'Order Date' as a date; 0 non-empty value(s) were invalid.
-  - Retained all 40 rows; 0 duplicate row(s) were identified but not removed.
+  - Parsed 'order date (DateOrders)' as a date; 0 non-empty value(s) were invalid.
+  - Retained all 180519 rows; 0 duplicate row(s) were identified but not removed.
   - No rows or columns were silently dropped.

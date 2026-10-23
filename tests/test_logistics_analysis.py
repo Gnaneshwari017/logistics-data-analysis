@@ -4,8 +4,10 @@ import pytest
 from logistics_analysis import (
     calculate_kpis,
     clean_data,
+    delivery_performance_by_mode,
     evaluate_classifier,
     identify_columns,
+    inspect_data,
     late_delivery_target,
     run_analysis,
 )
@@ -72,19 +74,62 @@ def test_cleaning_parses_values_and_retains_invalid_and_duplicate_rows():
     assert any("1 non-empty value(s) could not be parsed" in note for note in notes)
 
 
-def test_late_target_prefers_delay_and_keeps_unknown_status_unknown():
+def test_late_target_prefers_observed_status_and_excludes_canceled_records():
     frame = pd.DataFrame(
         {
-            "Delivery Delay Days": [2, 0, None],
-            "Delivery Status": ["Shipping on time", "Late delivery", "Unknown"],
+            "Delivery Delay Days": [2, 0, 5],
+            "Delivery Status": ["Shipping on time", "Late delivery", "Shipping canceled"],
+            "Late_delivery_risk": [1, 0, 0],
         }
     )
 
     target = late_delivery_target(frame)
 
-    assert target.iloc[0] == 1
-    assert target.iloc[1] == 0
+    assert target.iloc[0] == 0
+    assert target.iloc[1] == 1
     assert pd.isna(target.iloc[2])
+
+
+def test_dataco_column_aliases_and_mode_summary():
+    frame = pd.DataFrame(
+        {
+            "order date (DateOrders)": ["1/31/2018 22:56", "2/1/2018 22:56"],
+            "Delivery Status": ["Late delivery", "Advance shipping"],
+            "Shipping Mode": ["Standard Class", "First Class"],
+            "Days for shipping (real)": [5, 2],
+            "Days for shipment (scheduled)": [4, 3],
+        }
+    )
+
+    columns = identify_columns(frame)
+    kpis = calculate_kpis(frame)
+    by_mode = delivery_performance_by_mode(frame).set_index("shipping_mode")
+
+    assert columns["shipment_date"] == "order date (DateOrders)"
+    assert columns["delivery_time_days"] == "Days for shipping (real)"
+    assert kpis["late_delivery_rate"] == pytest.approx(0.5)
+    assert kpis["average_shipping_cost"] is None
+    assert by_mode.loc["Standard Class", "late_delivery_rate"] == 1
+    assert by_mode.loc["First Class", "late_delivery_rate"] == 0
+
+
+def test_inspection_sample_suppresses_customer_fields():
+    frame = pd.DataFrame(
+        {
+            "Delivery Status": ["Late delivery"],
+            "Shipping Mode": ["Standard Class"],
+            "Customer Fname": ["Private Name"],
+            "Customer Street": ["Private Street"],
+            "Customer Email": ["private@example.test"],
+        }
+    )
+
+    summary = inspect_data(frame, identify_columns(frame))
+
+    assert "Late delivery" in summary
+    assert "Private Name" not in summary
+    assert "Private Street" not in summary
+    assert "private@example.test" not in summary
 
 
 def test_classifier_trains_only_from_non_leaking_predictors():
@@ -103,6 +148,8 @@ def test_analysis_writes_expected_reports_and_skips_unsupported_charts(tmp_path)
     input_path = tmp_path / "small.csv"
     pd.DataFrame({"unrelated": [1, 2, 3]}).to_csv(input_path, index=False)
     output_dir = tmp_path / "outputs"
+    output_dir.mkdir()
+    (output_dir / "shipping_cost_analysis.png").write_bytes(b"stale synthetic chart")
     project_report = tmp_path / "reports" / "analysis.md"
 
     generated = run_analysis(
@@ -117,5 +164,6 @@ def test_analysis_writes_expected_reports_and_skips_unsupported_charts(tmp_path)
     assert "kpi_summary.csv" in names
     assert "analysis_report.md" in names
     assert "delivery_status.png" not in names
+    assert not (output_dir / "shipping_cost_analysis.png").exists()
     assert (output_dir / "clustering_summary.txt").is_file()
     assert "synthetic testing dataset" in project_report.read_text(encoding="utf-8")

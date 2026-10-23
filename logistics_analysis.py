@@ -24,6 +24,8 @@ COLUMN_ALIASES: dict[str, tuple[str, ...]] = {
         "shipment date",
         "ship date",
         "order date",
+        "order date dateorders",
+        "shipping date dateorders",
         "purchase date",
         "date",
     ),
@@ -73,7 +75,30 @@ LEAKAGE_HINTS = (
     "outcome",
     "target",
     "label",
+    "risk",
 )
+SENSITIVE_NAME_HINTS = (
+    "customer",
+    "email",
+    "password",
+    "street",
+    "address",
+    "zipcode",
+    "zip code",
+    "latitude",
+    "longitude",
+    "token",
+    "ip address",
+)
+SAFE_CATEGORICAL_FEATURES = {
+    "type",
+    "shipping mode",
+    "market",
+    "order region",
+    "customer segment",
+    "department name",
+    "category name",
+}
 
 
 def _normalized_name(value: Any) -> str:
@@ -102,8 +127,30 @@ def inspect_data(frame: pd.DataFrame, columns: dict[str, str | None]) -> str:
         "Data types:",
     ]
     lines.extend(f"  - {name}: {dtype}" for name, dtype in frame.dtypes.items())
-    lines.append("Sample records (up to 5):")
-    lines.append(frame.head().to_string(index=False) if not frame.empty else "  (no rows)")
+    safe_sample_columns = list(
+        dict.fromkeys(
+            value
+            for canonical, value in columns.items()
+            if value is not None
+            and canonical
+            in {
+                "shipment_date",
+                "delivery_status",
+                "shipping_mode",
+                "shipping_cost",
+                "delivery_time_days",
+                "scheduled_delivery_days",
+                "delivery_delay_days",
+            }
+        )
+    )
+    lines.append("Sample records (up to 5; identifying fields suppressed):")
+    if frame.empty:
+        lines.append("  (no rows)")
+    elif safe_sample_columns:
+        lines.append(frame[safe_sample_columns].head().to_string(index=False))
+    else:
+        lines.append("  No recognized non-identifying sample fields are available.")
     lines.append("Missing values by column:")
     missing = frame.isna().sum()
     lines.extend(f"  - {name}: {count}" for name, count in missing.items())
@@ -184,23 +231,43 @@ def _delivery_delay(frame: pd.DataFrame, columns: dict[str, str | None]) -> pd.S
 def late_delivery_target(
     frame: pd.DataFrame, columns: dict[str, str | None] | None = None
 ) -> pd.Series:
-    """Return 1 for late, 0 for known on-time/early, and NaN when unknown."""
+    """Use observed status labels first, then explicit risk or measurable delay."""
     columns = columns or identify_columns(frame)
     target = pd.Series(np.nan, index=frame.index, dtype="float64")
 
-    delay = _delivery_delay(frame, columns)
-    if delay is not None:
-        target.loc[delay.notna()] = (delay.loc[delay.notna()] > 0).astype(float)
-
     status_column = columns["delivery_status"]
+    canceled = pd.Series(False, index=frame.index)
     if status_column is not None:
         status = frame[status_column].astype("string").str.strip().str.lower()
         late = status.str.contains(r"\blate\b|\bdelay(?:ed)?\b", regex=True, na=False)
         on_time = status.str.contains(
-            r"on[\s-]*time|advance|early|delivered", regex=True, na=False
+            r"\bon[\s-]*time\b|\badvance\b|\bearly\b|\bdelivered\b",
+            regex=True,
+            na=False,
+        ) & ~status.str.contains(
+            r"\b(?:not|un)\s*delivered\b", regex=True, na=False
         )
-        known_status = (late | on_time) & target.isna()
+        canceled = status.str.contains(r"\bcancel(?:ed|led)?\b", regex=True, na=False)
+        known_status = late | on_time
         target.loc[known_status] = late.loc[known_status].astype(float)
+
+    risk_column = next(
+        (
+            str(column)
+            for column in frame.columns
+            if _normalized_name(column) in {"late delivery risk", "late delivery target"}
+        ),
+        None,
+    )
+    if risk_column is not None:
+        risk = pd.to_numeric(frame[risk_column], errors="coerce")
+        valid_risk = risk.isin([0, 1]) & target.isna() & ~canceled
+        target.loc[valid_risk] = risk.loc[valid_risk].astype(float)
+
+    delay = _delivery_delay(frame, columns)
+    if delay is not None:
+        valid_delay = delay.notna() & target.isna() & ~canceled
+        target.loc[valid_delay] = (delay.loc[valid_delay] > 0).astype(float)
 
     return target
 
@@ -214,6 +281,19 @@ def calculate_kpis(frame: pd.DataFrame) -> dict[str, Any]:
     delay = _delivery_delay(frame, columns)
     cost = _numeric_series(frame, columns["shipping_cost"])
     delivery_time = _numeric_series(frame, columns["delivery_time_days"])
+    delivery_status_column = columns["delivery_status"]
+    if delivery_status_column is not None:
+        delivery_time_mask = known
+    else:
+        delivery_time_mask = (
+            delivery_time.notna() if delivery_time is not None else known
+        )
+    average_delivery_time = (
+        delivery_time.loc[delivery_time_mask & delivery_time.notna()]
+        if delivery_time is not None
+        else None
+    )
+    average_delay = delay.loc[known & delay.notna()] if delay is not None else None
     mode_column = columns["shipping_mode"]
     mode_counts = (
         frame[mode_column].fillna("Unknown").astype(str).value_counts().sort_index().to_dict()
@@ -229,12 +309,14 @@ def calculate_kpis(frame: pd.DataFrame) -> dict[str, Any]:
             float(cost.mean()) if cost is not None and cost.notna().any() else None
         ),
         "average_delivery_time_days": (
-            float(delivery_time.mean())
-            if delivery_time is not None and delivery_time.notna().any()
+            float(average_delivery_time.mean())
+            if average_delivery_time is not None and average_delivery_time.notna().any()
             else None
         ),
         "average_delivery_delay_days": (
-            float(delay.mean()) if delay is not None and delay.notna().any() else None
+            float(average_delay.mean())
+            if average_delay is not None and average_delay.notna().any()
+            else None
         ),
         "shipment_count_by_shipping_mode": mode_counts,
         "delivery_status_counts": (
@@ -249,6 +331,37 @@ def calculate_kpis(frame: pd.DataFrame) -> dict[str, Any]:
         ),
         "recognized_columns": columns,
     }
+
+
+def delivery_performance_by_mode(frame: pd.DataFrame) -> pd.DataFrame:
+    """Summarize observed delivery outcomes and delay by shipping mode."""
+    columns = identify_columns(frame)
+    mode_column = columns["shipping_mode"]
+    if mode_column is None:
+        return pd.DataFrame()
+
+    target = late_delivery_target(frame, columns)
+    delay = _delivery_delay(frame, columns)
+    if delay is not None:
+        delay = delay.where(target.notna())
+    data = pd.DataFrame(
+        {
+            "shipping_mode": frame[mode_column].fillna("Unknown").astype(str),
+            "late": target,
+            "delay_days": delay if delay is not None else np.nan,
+        },
+        index=frame.index,
+    )
+    return (
+        data.groupby("shipping_mode", dropna=False)
+        .agg(
+            shipment_records=("late", "size"),
+            known_outcomes=("late", "count"),
+            late_delivery_rate=("late", "mean"),
+            average_delivery_delay_days=("delay_days", "mean"),
+        )
+        .reset_index()
+    )
 
 
 def _safe_numeric_features(
@@ -270,15 +383,20 @@ def _safe_numeric_features(
         normalized = _normalized_name(column)
         if column in excluded or any(hint in normalized for hint in IDENTIFIER_HINTS):
             continue
+        if any(hint in normalized for hint in SENSITIVE_NAME_HINTS):
+            continue
         if any(hint in normalized for hint in LEAKAGE_HINTS):
             continue
         if frame[column].nunique(dropna=True) > 1:
             numeric_features.append(str(column))
 
-    categorical_features: list[str] = []
-    mode = columns["shipping_mode"]
-    if mode is not None and frame[mode].nunique(dropna=True) > 1:
-        categorical_features.append(mode)
+    categorical_features = [
+        str(column)
+        for column in frame.select_dtypes(include=["object", "string", "category"]).columns
+        if _normalized_name(column) in SAFE_CATEGORICAL_FEATURES
+        and not any(hint in _normalized_name(column) for hint in LEAKAGE_HINTS)
+        and 1 < frame[column].nunique(dropna=True) <= 100
+    ]
 
     features = frame[numeric_features + categorical_features].copy()
     date_column = columns["shipment_date"]
@@ -319,6 +437,14 @@ def evaluate_classifier(
     if not numeric_features and not categorical_features:
         return "Model not trained: no suitable non-leaking predictor features were found.", None
 
+    date_column = columns["shipment_date"]
+    dates = (
+        pd.to_datetime(frame.loc[features.index, date_column], errors="coerce", format="mixed")
+        if date_column is not None
+        else pd.Series(pd.NaT, index=features.index)
+    )
+    valid_dates = dates.notna()
+    temporal_split = valid_dates.sum() >= len(features) * 0.9
     try:
         from sklearn.compose import ColumnTransformer
         from sklearn.impute import SimpleImputer
@@ -331,7 +457,6 @@ def evaluate_classifier(
             recall_score,
             roc_auc_score,
         )
-        from sklearn.model_selection import train_test_split
         from sklearn.pipeline import Pipeline
         from sklearn.preprocessing import OneHotEncoder, StandardScaler
     except ImportError:
@@ -363,13 +488,28 @@ def evaluate_classifier(
         ]
     )
     try:
-        X_train, X_test, y_train, y_test = train_test_split(
-            features,
-            y,
-            test_size=0.25,
-            random_state=42,
-            stratify=y,
-        )
+        if temporal_split:
+            cutoff = dates.quantile(0.75)
+            train_mask = dates < cutoff
+            test_mask = dates >= cutoff
+            X_train, X_test = features.loc[train_mask], features.loc[test_mask]
+            y_train, y_test = y.loc[train_mask], y.loc[test_mask]
+            if y_train.nunique() != 2 or y_test.nunique() != 2:
+                return (
+                    "Model not trained: a chronological 75/25 holdout did not contain "
+                    "both outcome classes in train and test.",
+                    None,
+                )
+        else:
+            from sklearn.model_selection import train_test_split
+
+            X_train, X_test, y_train, y_test = train_test_split(
+                features,
+                y,
+                test_size=0.25,
+                random_state=42,
+                stratify=y,
+            )
         model.fit(X_train, y_train)
         predictions = model.predict(X_test)
         probabilities = model.predict_proba(X_test)[:, 1]
@@ -387,8 +527,13 @@ def evaluate_classifier(
     details = [
         "Model: Logistic Regression with median/mode imputation, numeric scaling, and one-hot encoding.",
         "Target: late delivery (1) versus known on-time/early delivery (0).",
-        "Evaluation: stratified 75/25 train/test split; random_state=42.",
-        "Leakage controls: delivery outcome, actual delivery time, schedule, and delay fields are excluded from predictors.",
+        (
+            "Evaluation: chronological 75/25 holdout by shipment date."
+            if temporal_split
+            else "Evaluation: stratified random 75/25 train/test split; random_state=42 "
+            "(no sufficiently complete shipment date was available)."
+        ),
+        "Leakage controls: delivery outcome/status, explicit late-risk label, actual delivery time, schedule, and delay fields are excluded from predictors.",
         f"Predictors: {', '.join(numeric_features + categorical_features) or '(none)'}.",
         f"Train rows: {len(X_train)}; test rows: {len(X_test)}.",
         "Holdout metrics:",
@@ -412,6 +557,8 @@ def evaluate_clusters(frame: pd.DataFrame) -> str:
         for name in frame.select_dtypes(include=["number"]).columns
         if name not in blocked
         and not any(hint in _normalized_name(name) for hint in IDENTIFIER_HINTS)
+        and not any(hint in _normalized_name(name) for hint in SENSITIVE_NAME_HINTS)
+        and not any(hint in _normalized_name(name) for hint in LEAKAGE_HINTS)
         and frame[name].nunique(dropna=True) > 1
     ]
     if len(feature_names) < 2 or len(frame) < 10:
@@ -431,6 +578,9 @@ def evaluate_clusters(frame: pd.DataFrame) -> str:
     values = frame.loc[usable, feature_names]
     if len(values) < 10:
         return "Clustering not performed: fewer than 10 rows have usable operational measurements."
+    sampled = len(values) > 20000
+    if sampled:
+        values = values.sample(n=20000, random_state=42)
     cluster_count = min(3, len(values) // 3)
     if cluster_count < 2:
         return "Clustering not performed: too few usable records to form interpretable groups."
@@ -442,7 +592,8 @@ def evaluate_clusters(frame: pd.DataFrame) -> str:
     labels = pipeline.fit_predict(values)
     summary = pd.DataFrame(values).assign(cluster=labels).groupby("cluster").mean(numeric_only=True)
     lines = [
-        f"Exploratory K-means clustering used {len(values)} rows and {len(feature_names)} numeric feature(s): "
+        f"Exploratory K-means clustering used {len(values)}"
+        f"{' deterministically sampled rows' if sampled else ' rows'} and {len(feature_names)} numeric feature(s): "
         f"{', '.join(feature_names)}.",
         "Features were median-imputed and standardized. Cluster IDs are descriptive, not quality rankings.",
         "Cluster mean profiles:",
@@ -494,7 +645,32 @@ def _save_charts(frame: pd.DataFrame, output_dir: Path) -> list[str]:
         plt.xticks(rotation=25, ha="right")
         save_figure("shipping_mode_analysis.png")
 
+    mode_performance = delivery_performance_by_mode(frame)
+    if not mode_performance.empty:
+        chartable_mode_performance = mode_performance.dropna(
+            subset=["late_delivery_rate"]
+        )
+    else:
+        chartable_mode_performance = pd.DataFrame()
+    if not chartable_mode_performance.empty:
+        chartable_mode_performance = chartable_mode_performance.sort_values(
+            "late_delivery_rate", ascending=False
+        )
+        plt.figure(figsize=(9, 5))
+        plt.bar(
+            chartable_mode_performance["shipping_mode"],
+            chartable_mode_performance["late_delivery_rate"] * 100,
+            color="#DD8452",
+        )
+        plt.title("Late delivery rate by shipping mode")
+        plt.xlabel("Shipping mode")
+        plt.ylabel("Late deliveries (%)")
+        plt.xticks(rotation=25, ha="right")
+        save_figure("late_delivery_rate_by_mode.png")
+
     delay = _delivery_delay(frame, columns)
+    if delay is not None:
+        delay = delay.where(target.notna())
     if delay is not None and delay.notna().any():
         delay.dropna().plot(kind="hist", bins=min(20, max(5, int(np.sqrt(delay.notna().sum())))), color="#C44E52")
         plt.title("Delivery delay distribution")
@@ -530,6 +706,7 @@ def _write_report(
     cluster_text: str,
     clean_notes: list[str],
     chart_path_prefix: str = "",
+    mode_performance: pd.DataFrame | None = None,
 ) -> None:
     synthetic_note = (
         " **This is a synthetic testing dataset; its values are not real-world findings.**"
@@ -567,6 +744,9 @@ def _write_report(
             f"The plotted costs have an observed mean of "
             f"{_format_value(kpis['average_shipping_cost'])} in the source currency."
         ),
+        "late_delivery_rate_by_mode.png": (
+            "Compares late-delivery rates among records with a classifiable outcome in each mode."
+        ),
     }
     chart_lines = (
         "\n".join(
@@ -579,6 +759,33 @@ def _write_report(
         if chart_names
         else "No charts were produced because the required fields were unavailable or empty."
     )
+    findings = [
+        f"- The source contains {kpis['total_shipments']:,} line-item records; "
+        f"{kpis['delivery_rate_known_count']:,} have a recognized delivery outcome."
+    ]
+    if kpis["late_delivery_rate"] is not None:
+        findings.append(
+            f"- Among records with a known delivery outcome, "
+            f"{kpis['late_delivery_rate']:.1%} were late and "
+            f"{kpis['on_time_delivery_rate']:.1%} were on time or early."
+        )
+    if mode_performance is not None and not mode_performance.empty:
+        ranked_modes = mode_performance.dropna(subset=["late_delivery_rate"]).sort_values(
+            "late_delivery_rate", ascending=False
+        )
+        if not ranked_modes.empty:
+            highest = ranked_modes.iloc[0]
+            findings.append(
+                f"- {highest['shipping_mode']} had the highest observed late rate "
+                f"({highest['late_delivery_rate']:.1%}; "
+                f"{int(highest['known_outcomes']):,} known outcomes); investigate "
+                "this pattern and validate status coding before changing service plans."
+            )
+    if kpis["average_shipping_cost"] is None:
+        findings.append(
+            "- The source does not provide shipping-cost values, so shipping costs and "
+            "cost-versus-service trade-offs could not be measured."
+        )
     lines = [
         "# Logistics Analysis Report",
         "",
@@ -595,9 +802,10 @@ def _write_report(
         "## Dataset description and source",
         f"- Input file: `{source_name}`",
         f"- Dataset designation: **{data_kind}**.{synthetic_note}",
-        "- For real data, obtain the DataCo Smart Supply Chain dataset from the Kaggle dataset "
-        "page listed in the project README and data guide. Follow the current listing's license "
-        "and terms; this project does not bundle or redistribute that dataset.",
+        "- Source: DataCo Smart Supply Chain dataset, Kaggle listing (CC0: Public Domain "
+        "license shown by the listing at the time of analysis). The 95.9 MB source file remains "
+        "local and is excluded from Git because it contains customer-identifying fields.",
+        "- Dataset rows are line-item records and are not necessarily unique physical shipments.",
         "",
         "## Data cleaning methodology",
         "Column names are matched through documented aliases. Recognized dates and operational "
@@ -627,6 +835,21 @@ def _write_report(
         f"| Average delay (days; positive means late) | {_format_value(kpis['average_delivery_delay_days'])} |",
         f"| Shipment count by mode | {mode_text} |",
         "",
+        "### Delivery performance by mode",
+        (
+            "| Shipping mode | Records | Known outcomes | Late rate | Avg. delay (days) |\n"
+            "|---|---:|---:|---:|---:|\n"
+            + "\n".join(
+                f"| {row.shipping_mode} | {int(row.shipment_records)} | "
+                f"{int(row.known_outcomes)} | "
+                f"{_format_value(row.late_delivery_rate, percent=True)} | "
+                f"{_format_value(row.average_delivery_delay_days)} |"
+                for row in mode_performance.itertuples(index=False)
+            )
+            if mode_performance is not None and not mode_performance.empty
+            else "No delivery-mode performance table could be calculated from available fields."
+        ),
+        "",
         "## Exploratory data analysis and charts",
         chart_lines,
         "",
@@ -644,8 +867,7 @@ def _write_report(
             "The results above describe only this synthetic test sample and must not be interpreted "
             "as findings about real operations."
             if data_kind == "synthetic"
-            else "The KPI table and available charts are the observed results for the supplied dataset. "
-            "No causal claims are made."
+            else "\n".join(findings)
         ),
         "",
         "## Recommendations",
@@ -735,18 +957,48 @@ def run_analysis(
         output / "kpi_summary.csv", index=False
     )
 
+    mode_performance = delivery_performance_by_mode(cleaned)
+    if not mode_performance.empty:
+        mode_performance.to_csv(output / "delivery_performance_by_mode.csv", index=False)
+
+    expected_chart_names = {
+        "delivery_status.png",
+        "shipping_mode_analysis.png",
+        "late_delivery_rate_by_mode.png",
+        "delivery_delay_analysis.png",
+        "shipping_cost_analysis.png",
+    }
+    for stale_chart in expected_chart_names:
+        stale_path = output / stale_chart
+        if stale_path.exists():
+            stale_path.unlink()
     chart_names = _save_charts(cleaned, output)
     model_text, _ = evaluate_classifier(cleaned, identify_columns(cleaned))
     (output / "model_evaluation.txt").write_text(model_text + "\n", encoding="utf-8")
     cluster_text = evaluate_clusters(cleaned)
     (output / "clustering_summary.txt").write_text(cluster_text + "\n", encoding="utf-8")
     report_path = output / "analysis_report.md"
-    _write_report(report_path, path.name, data_kind, kpis, chart_names, model_text, cluster_text, notes)
+    _write_report(
+        report_path,
+        path.name,
+        data_kind,
+        kpis,
+        chart_names,
+        model_text,
+        cluster_text,
+        notes,
+        mode_performance=mode_performance,
+    )
     created = [
         output / "data_summary.txt",
         output / "kpi_summary.csv",
         output / "model_evaluation.txt",
         output / "clustering_summary.txt",
+        *(
+            [output / "delivery_performance_by_mode.csv"]
+            if not mode_performance.empty
+            else []
+        ),
         *[output / name for name in chart_names],
         report_path,
     ]
@@ -765,6 +1017,7 @@ def run_analysis(
                 os.path.relpath(output.resolve(), project_path.parent.resolve())
             ).as_posix().rstrip("/")
             + "/",
+            mode_performance=mode_performance,
         )
         created.append(project_path)
     return created

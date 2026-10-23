@@ -1,13 +1,16 @@
 # Analysis outputs
 
-Run `logistics_analysis.py` from the repository root to generate the data
-summary, KPI CSV, supported visualizations, model/clustering evaluation files,
-and a run-specific report in this directory.
+These committed outputs were generated from the real DataCo shipment CSV
+available locally as `data/logistics_data.csv`. The Kaggle listing's dataset
+API reports CC0, but the approximately 95.9 MB raw CSV includes customer
+identifying fields and is deliberately not committed.
 
-The files in this directory are generated from the clearly labeled synthetic
-sample only when that sample is used as input. They demonstrate that the
-pipeline runs; they are **not real-world logistics findings**. Run the script
-with an authorized local real dataset to replace them with real-data outputs.
+Run `logistics_analysis.py` from the repository root to regenerate the data
+summary, KPI CSV, delivery-by-mode summary, supported charts, model/clustering
+evaluation files, and reports. The saved summary suppresses personal field
+values. The raw dataset is never copied into this folder.
 
-Charts are omitted if their source fields are absent or contain no usable
-values. The source dataset is not copied into this folder.
+DataCo has no shipping-cost column, so there is no shipping-cost chart. Charts
+are omitted when their source fields are unavailable or empty. All committed
+metrics are real-dataset observations; synthetic sample results are not mixed
+into these outputs.

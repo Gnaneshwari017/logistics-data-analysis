@@ -21,7 +21,8 @@ dist/
 kaggle.json
 
 # Local real datasets and downloads (keep the clearly labeled synthetic sample)
-data/logistics_data.csv
+data/*.csv
+!data/synthetic_logistics_sample.csv
 data/DataCoSupplyChainDataset.csv
 data/*.zip
 data/*.7z
