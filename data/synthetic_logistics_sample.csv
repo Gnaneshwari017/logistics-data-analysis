@@ -1,0 +1,41 @@
+record_origin,Order Date,Delivery Status,Shipping Mode,Shipping Cost,Days for Shipping (Real),Days for Shipment (Scheduled),Delivery Delay Days,Order Item Quantity,Order Item Total
+SYNTHETIC ONLY,2025-01-02,Shipping on time,Standard Class,8.50,3,4,-1,2,75.00
+SYNTHETIC ONLY,2025-01-03,Late delivery,Standard Class,11.20,6,4,2,1,49.00
+SYNTHETIC ONLY,2025-01-04,Advance shipping,First Class,16.00,2,3,-1,3,120.00
+SYNTHETIC ONLY,2025-01-05,Late delivery,Second Class,12.40,5,3,2,2,88.00
+SYNTHETIC ONLY,2025-01-06,Shipping on time,Same Day,20.00,1,1,0,1,39.00
+SYNTHETIC ONLY,2025-01-07,Late delivery,Standard Class,9.80,7,4,3,4,160.00
+SYNTHETIC ONLY,2025-01-08,Advance shipping,First Class,15.50,2,3,-1,2,84.00
+SYNTHETIC ONLY,2025-01-09,Shipping on time,Second Class,12.10,3,3,0,1,51.00
+SYNTHETIC ONLY,2025-01-10,Late delivery,Standard Class,10.40,5,4,1,3,105.00
+SYNTHETIC ONLY,2025-01-11,Advance shipping,Same Day,21.50,1,1,0,2,92.00
+SYNTHETIC ONLY,2025-01-12,Shipping on time,First Class,14.20,2,3,-1,1,44.00
+SYNTHETIC ONLY,2025-01-13,Late delivery,Second Class,13.60,6,3,3,4,180.00
+SYNTHETIC ONLY,2025-01-14,Advance shipping,Standard Class,8.90,3,4,-1,2,79.00
+SYNTHETIC ONLY,2025-01-15,Late delivery,Standard Class,10.10,6,4,2,1,53.00
+SYNTHETIC ONLY,2025-01-16,Shipping on time,Second Class,12.80,3,3,0,3,132.00
+SYNTHETIC ONLY,2025-01-17,Advance shipping,First Class,16.30,2,3,-1,2,96.00
+SYNTHETIC ONLY,2025-01-18,Late delivery,Standard Class,9.60,5,4,1,3,117.00
+SYNTHETIC ONLY,2025-01-19,Shipping on time,Same Day,22.00,1,1,0,1,47.00
+SYNTHETIC ONLY,2025-01-20,Advance shipping,Second Class,13.10,2,3,-1,4,168.00
+SYNTHETIC ONLY,2025-01-21,Late delivery,Standard Class,11.50,7,4,3,2,101.00
+SYNTHETIC ONLY,2025-01-22,Shipping on time,First Class,15.10,3,3,0,2,80.00
+SYNTHETIC ONLY,2025-01-23,Late delivery,Second Class,12.60,5,3,2,3,144.00
+SYNTHETIC ONLY,2025-01-24,Advance shipping,Standard Class,9.20,3,4,-1,1,41.00
+SYNTHETIC ONLY,2025-01-25,Late delivery,Standard Class,10.70,6,4,2,4,192.00
+SYNTHETIC ONLY,2025-01-26,Shipping on time,Second Class,13.40,3,3,0,2,90.00
+SYNTHETIC ONLY,2025-01-27,Advance shipping,First Class,16.80,2,3,-1,3,138.00
+SYNTHETIC ONLY,2025-01-28,Late delivery,Standard Class,9.90,5,4,1,1,56.00
+SYNTHETIC ONLY,2025-01-29,Shipping on time,Same Day,19.70,1,1,0,2,104.00
+SYNTHETIC ONLY,2025-01-30,Advance shipping,Second Class,12.90,2,3,-1,3,126.00
+SYNTHETIC ONLY,2025-01-31,Late delivery,Standard Class,11.00,7,4,3,2,98.00
+SYNTHETIC ONLY,2025-02-01,Shipping on time,First Class,14.80,3,3,0,4,176.00
+SYNTHETIC ONLY,2025-02-02,Advance shipping,Standard Class,8.70,3,4,-1,2,86.00
+SYNTHETIC ONLY,2025-02-03,Late delivery,Second Class,13.90,6,3,3,1,61.00
+SYNTHETIC ONLY,2025-02-04,Shipping on time,Standard Class,10.30,4,4,0,3,123.00
+SYNTHETIC ONLY,2025-02-05,Advance shipping,Same Day,21.20,1,1,0,1,52.00
+SYNTHETIC ONLY,2025-02-06,Late delivery,Standard Class,9.40,5,4,1,2,94.00
+SYNTHETIC ONLY,2025-02-07,Shipping on time,Second Class,12.30,3,3,0,4,164.00
+SYNTHETIC ONLY,2025-02-08,Advance shipping,First Class,15.90,2,3,-1,1,48.00
+SYNTHETIC ONLY,2025-02-09,Late delivery,Standard Class,10.60,6,4,2,3,156.00
+SYNTHETIC ONLY,2025-02-10,Shipping on time,Same Day,20.80,1,1,0,2,112.00

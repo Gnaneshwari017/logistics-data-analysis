@@ -1,0 +1,14 @@
+Model: Logistic Regression with median/mode imputation, numeric scaling, and one-hot encoding.
+Target: late delivery (1) versus known on-time/early delivery (0).
+Evaluation: stratified 75/25 train/test split; random_state=42.
+Leakage controls: delivery outcome, actual delivery time, schedule, and delay fields are excluded from predictors.
+Predictors: Shipping Cost, Order Item Quantity, Order Item Total, shipment_month, shipment_day_of_week, Shipping Mode.
+Train rows: 30; test rows: 10.
+Holdout metrics:
+  - accuracy: 0.8000
+  - balanced_accuracy: 0.8333
+  - precision: 0.6667
+  - recall: 1.0000
+  - f1: 0.8000
+  - roc_auc: 0.7917
+Metrics describe this dataset and split; they are not a guarantee of future performance.

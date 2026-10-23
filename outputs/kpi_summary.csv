@@ -1,0 +1,12 @@
+kpi,value,unit
+total_shipments,40.0,shipments
+on_time_delivery_rate,0.625,fraction
+late_delivery_rate,0.375,fraction
+delivery_rate_known_count,40.0,shipments
+average_shipping_cost,13.467500000000001,source currency
+average_delivery_time_days,3.575,days
+average_delivery_delay_days,0.475,days
+shipments_by_mode:First Class,8.0,shipments
+shipments_by_mode:Same Day,6.0,shipments
+shipments_by_mode:Second Class,10.0,shipments
+shipments_by_mode:Standard Class,16.0,shipments

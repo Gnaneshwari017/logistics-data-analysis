@@ -1,0 +1,34 @@
+# Python virtual environments
+.venv/
+venv/
+env/
+
+# Python caches and build artifacts
+__pycache__/
+*.py[cod]
+.pytest_cache/
+build/
+dist/
+*.egg-info/
+
+# Jupyter temporary state
+.ipynb_checkpoints/
+
+# Local environment files and credentials
+.env
+.env.*
+!.env.example
+kaggle.json
+
+# Local real datasets and downloads (keep the clearly labeled synthetic sample)
+data/logistics_data.csv
+data/DataCoSupplyChainDataset.csv
+data/*.zip
+data/*.7z
+data/*.rar
+
+# OS/editor temporary files
+Thumbs.db
+.DS_Store
+*.tmp
+*.log

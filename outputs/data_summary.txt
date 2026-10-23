@@ -1,0 +1,45 @@
+Dataset shape: 40 rows x 10 columns
+Column names: record_origin, Order Date, Delivery Status, Shipping Mode, Shipping Cost, Days for Shipping (Real), Days for Shipment (Scheduled), Delivery Delay Days, Order Item Quantity, Order Item Total
+Data types:
+  - record_origin: object
+  - Order Date: object
+  - Delivery Status: object
+  - Shipping Mode: object
+  - Shipping Cost: float64
+  - Days for Shipping (Real): int64
+  - Days for Shipment (Scheduled): int64
+  - Delivery Delay Days: int64
+  - Order Item Quantity: int64
+  - Order Item Total: float64
+Sample records (up to 5):
+ record_origin Order Date  Delivery Status  Shipping Mode  Shipping Cost  Days for Shipping (Real)  Days for Shipment (Scheduled)  Delivery Delay Days  Order Item Quantity  Order Item Total
+SYNTHETIC ONLY 2025-01-02 Shipping on time Standard Class            8.5                         3                              4                   -1                    2              75.0
+SYNTHETIC ONLY 2025-01-03    Late delivery Standard Class           11.2                         6                              4                    2                    1              49.0
+SYNTHETIC ONLY 2025-01-04 Advance shipping    First Class           16.0                         2                              3                   -1                    3             120.0
+SYNTHETIC ONLY 2025-01-05    Late delivery   Second Class           12.4                         5                              3                    2                    2              88.0
+SYNTHETIC ONLY 2025-01-06 Shipping on time       Same Day           20.0                         1                              1                    0                    1              39.0
+Missing values by column:
+  - record_origin: 0
+  - Order Date: 0
+  - Delivery Status: 0
+  - Shipping Mode: 0
+  - Shipping Cost: 0
+  - Days for Shipping (Real): 0
+  - Days for Shipment (Scheduled): 0
+  - Delivery Delay Days: 0
+  - Order Item Quantity: 0
+  - Order Item Total: 0
+Duplicate rows: 0
+Recognized logistics fields:
+  - shipment_date: Order Date
+  - delivery_status: Delivery Status
+  - shipping_mode: Shipping Mode
+  - shipping_cost: Shipping Cost
+  - delivery_time_days: Days for Shipping (Real)
+  - scheduled_delivery_days: Days for Shipment (Scheduled)
+  - delivery_delay_days: Delivery Delay Days
+
+Cleaning notes:
+  - Parsed 'Order Date' as a date; 0 non-empty value(s) were invalid.
+  - Retained all 40 rows; 0 duplicate row(s) were identified but not removed.
+  - No rows or columns were silently dropped.

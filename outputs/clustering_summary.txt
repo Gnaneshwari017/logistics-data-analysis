@@ -1,0 +1,9 @@
+Exploratory K-means clustering used 40 rows and 6 numeric feature(s): Shipping Cost, Days for Shipping (Real), Days for Shipment (Scheduled), Delivery Delay Days, Order Item Quantity, Order Item Total.
+Features were median-imputed and standardized. Cluster IDs are descriptive, not quality rankings.
+Cluster mean profiles:
+         Shipping Cost  Days for Shipping (Real)  Days for Shipment (Scheduled)  Delivery Delay Days  Order Item Quantity  Order Item Total
+cluster
+0                20.87                      1.00                           1.00                 0.00                 1.50             74.33
+1                12.99                      2.63                           3.26                -0.63                 2.37            101.11
+2                11.11                      5.80                           3.73                 2.07                 2.40            110.27
+Validate whether these groupings are operationally meaningful before making decisions.
