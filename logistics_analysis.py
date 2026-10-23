@@ -286,7 +286,7 @@ def _safe_numeric_features(
         dates = pd.to_datetime(frame[date_column], errors="coerce")
         if dates.notna().sum() > 1:
             features["shipment_month"] = dates.dt.month
-            features["shipment_day_of_week"] = dates.dt.dayofweek
+            features["shipment_day_of_week"] = dates.dt.day_of_week
             numeric_features.extend(["shipment_month", "shipment_day_of_week"])
     return features, numeric_features, categorical_features
 

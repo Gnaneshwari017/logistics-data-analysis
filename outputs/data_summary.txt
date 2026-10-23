@@ -1,10 +1,10 @@
 Dataset shape: 40 rows x 10 columns
 Column names: record_origin, Order Date, Delivery Status, Shipping Mode, Shipping Cost, Days for Shipping (Real), Days for Shipment (Scheduled), Delivery Delay Days, Order Item Quantity, Order Item Total
 Data types:
-  - record_origin: object
-  - Order Date: object
-  - Delivery Status: object
-  - Shipping Mode: object
+  - record_origin: str
+  - Order Date: str
+  - Delivery Status: str
+  - Shipping Mode: str
   - Shipping Cost: float64
   - Days for Shipping (Real): int64
   - Days for Shipment (Scheduled): int64
